@@ -1,0 +1,1 @@
+/home/kino/Videos/0-shell/target/debug/zero-shell: /home/kino/Videos/0-shell/src/commands/mkdir.rs /home/kino/Videos/0-shell/src/commands/mod.rs /home/kino/Videos/0-shell/src/main.rs /home/kino/Videos/0-shell/src/shell.rs
