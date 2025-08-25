@@ -90,7 +90,7 @@ pub fn prompt() -> String {
 
     let user = std::env::var("USER")
         .or_else(|_| std::env::var("LOGNAME"))
-        .unwrap_or_else(|_| "user".to_string());
+        .unwrap_or("user".to_string());
     let host = hostname();
 
     let cwd_full = std::env::current_dir()

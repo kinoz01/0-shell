@@ -1,4 +1,3 @@
-// src/main.rs
 mod shell;
 mod commands;
 
