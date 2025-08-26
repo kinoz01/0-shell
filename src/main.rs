@@ -24,9 +24,8 @@ fn main() -> io::Result<()> {
         }
 
         match shell::dispatch(cmdline) {
-            Ok(keep_running) if !keep_running => break,
-            Ok(_) => {}
-            Err(e) => eprintln!("{e}"),
+            true => break,
+            _ => {}
         }
     }
 

@@ -1,96 +1,102 @@
 use crate::commands;
-use std::fmt;
 
-#[derive(Debug)]
-pub enum ShellError {
-    Message(String),
-}
-
-impl fmt::Display for ShellError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ShellError::Message(m) => write!(f, "{m}"),
-        }
-    }
-}
-
-pub fn dispatch(input: &str) -> Result<bool, ShellError> {
-    let tokens = tokenize(input);
-    if tokens.is_empty() {
-        return Ok(true);
+pub fn dispatch(input: &str) -> bool {
+    let cmd_args = parse_input(input);
+    if cmd_args.is_empty() {
+        return false;
     }
 
-    let cmd = &tokens[0];
-    let args = &tokens[1..];
+    let cmd = &cmd_args[0];
+    let args = &cmd_args[1..];
 
     match cmd.as_str() {
-        // only mkdir implemented for now
         "mkdir" => {
-            commands::mkdir::run(args).map_err(ShellError::Message)?;
-            Ok(true)
+            commands::mkdir::run(args);
+            return false;
         }
 
-        // keep 'exit' placeholder for later; user can Ctrl+D meanwhile
-        "exit" => Ok(false),
+        "exit" => true,
 
         other => {
-            eprintln!("Command '{other}' not found");
-            Ok(true)
+            eprintln!("Command '{}' not found", other);
+            return false;
         }
     }
 }
 
-// Minimal tokenizer:
-// - splits on ASCII whitespace
-// - supports double-quoted segments "like this"
-// - supports backslash escapes for space and quotes: \  \"
-fn tokenize(s: &str) -> Vec<String> {
+fn parse_input(s: &str) -> Vec<String> {
+    #[derive(Copy, Clone, PartialEq)]
+    enum Mode { Normal, InSingle, InDouble }
+
     let mut out = Vec::new();
     let mut cur = String::new();
     let mut chars = s.chars().peekable();
-    let mut in_quotes = false;
+    let mut mode = Mode::Normal;
 
     while let Some(c) = chars.next() {
-        match c {
-            '\\' => {
+        match (mode, c) {
+            // -------- Normal mode --------
+            (Mode::Normal, '\\') => {
                 if let Some(&next) = chars.peek() {
-                    // allow escaping space and quote and backslash
-                    if next == ' ' || next == '"' || next == '\\' {
+                    // allow escaping space, quotes, and backslash
+                    if next == ' ' || next == '"' || next == '\\' || next == '\'' {
                         cur.push(next);
                         chars.next();
                     } else {
-                        cur.push(c);
+                        cur.push('\\');
                     }
                 } else {
-                    cur.push(c);
+                    cur.push('\\');
                 }
             }
-            '"' => {
-                in_quotes = !in_quotes;
-            }
-            c if c.is_whitespace() && !in_quotes => {
+            (Mode::Normal, '"') => { mode = Mode::InDouble; }
+            (Mode::Normal, '\'') => { mode = Mode::InSingle; }
+            (Mode::Normal, c) if c.is_whitespace() => {
                 if !cur.is_empty() {
                     out.push(std::mem::take(&mut cur));
                 }
             }
-            _ => cur.push(c),
+            (Mode::Normal, other) => cur.push(other),
+
+            // -------- Inside "double quotes" --------
+            (Mode::InDouble, '\\') => {
+                if let Some(&next) = chars.peek() {
+                    // escape " \ and space inside "
+                    if next == '"' || next == '\\' || next == ' ' {
+                        cur.push(next);
+                        chars.next();
+                    } else {
+                        cur.push('\\');
+                    }
+                } else {
+                    cur.push('\\');
+                }
+            }
+            (Mode::InDouble, '"') => { mode = Mode::Normal; }
+            (Mode::InDouble, other) => cur.push(other),
+
+            // -------- Inside 'single quotes' --------
+            (Mode::InSingle, '\'') => { mode = Mode::Normal; }
+            (Mode::InSingle, other) => cur.push(other),
         }
     }
+
     if !cur.is_empty() {
         out.push(cur);
     }
     out
 }
 
+
 pub fn prompt() -> String {
-    // ANSI colors
     const GREEN: &str = "\x1b[32m";
     const BLUE: &str = "\x1b[34m";
     const RESET: &str = "\x1b[0m";
 
     let user = std::env::var("USER")
         .or_else(|_| std::env::var("LOGNAME"))
-        .unwrap_or("user".to_string());
+        .unwrap_or_else(|_| "user".to_string());
+        
     let host = hostname();
 
     let cwd_full = std::env::current_dir()
@@ -105,12 +111,10 @@ pub fn prompt() -> String {
         cwd_full
     };
 
-    // kino@pop-os:~/Videos/0-shell$
     format!("{GREEN}{user}@{host}{RESET}:{BLUE}{cwd_disp}{RESET}$ ")
 }
 
 fn hostname() -> String {
-    // Try env, then /proc, then /etc
     if let Ok(h) = std::env::var("HOSTNAME") {
         return h;
     }
