@@ -10,23 +10,29 @@ pub fn dispatch(input: &str) -> bool {
     let args = &cmd_args[1..];
 
     match cmd.as_str() {
-        "mkdir" => {
-            commands::mkdir::run(args);
-            return false;
-        }
-
-        "exit" => true,
-
-        other => {
-            eprintln!("Command '{}' not found", other);
-            return false;
-        }
+        "mkdir" => commands::mkdir::run(args),
+        //"ls" => commands::ls::run(args),
+        //"cd"  => commands::cd::run(args),
+        //"cat"  => commands::cat::run(args),
+        //"pwd" => commands::pwd::run(args),
+        //"cp" => commands::cp::run(args),
+        //"rm" => commands::rm::run(args),
+        //"mv" => commands::mv::run(args),
+        //"echo" => commands::echo::run(args),
+        "exit" => return true,
+        other => eprintln!("Command '{}' not found", other),
     }
+
+    return false;
 }
 
 fn parse_input(s: &str) -> Vec<String> {
     #[derive(Copy, Clone, PartialEq)]
-    enum Mode { Normal, InSingle, InDouble }
+    enum Mode {
+        Normal,
+        InSingle,
+        InDouble,
+    }
 
     let mut out = Vec::new();
     let mut cur = String::new();
@@ -49,8 +55,12 @@ fn parse_input(s: &str) -> Vec<String> {
                     cur.push('\\');
                 }
             }
-            (Mode::Normal, '"') => { mode = Mode::InDouble; }
-            (Mode::Normal, '\'') => { mode = Mode::InSingle; }
+            (Mode::Normal, '"') => {
+                mode = Mode::InDouble;
+            }
+            (Mode::Normal, '\'') => {
+                mode = Mode::InSingle;
+            }
             (Mode::Normal, c) if c.is_whitespace() => {
                 if !cur.is_empty() {
                     out.push(std::mem::take(&mut cur));
@@ -72,11 +82,15 @@ fn parse_input(s: &str) -> Vec<String> {
                     cur.push('\\');
                 }
             }
-            (Mode::InDouble, '"') => { mode = Mode::Normal; }
+            (Mode::InDouble, '"') => {
+                mode = Mode::Normal;
+            }
             (Mode::InDouble, other) => cur.push(other),
 
             // -------- Inside 'single quotes' --------
-            (Mode::InSingle, '\'') => { mode = Mode::Normal; }
+            (Mode::InSingle, '\'') => {
+                mode = Mode::Normal;
+            }
             (Mode::InSingle, other) => cur.push(other),
         }
     }
@@ -87,7 +101,6 @@ fn parse_input(s: &str) -> Vec<String> {
     out
 }
 
-
 pub fn prompt() -> String {
     const GREEN: &str = "\x1b[32m";
     const BLUE: &str = "\x1b[34m";
@@ -96,7 +109,7 @@ pub fn prompt() -> String {
     let user = std::env::var("USER")
         .or_else(|_| std::env::var("LOGNAME"))
         .unwrap_or_else(|_| "user".to_string());
-        
+
     let host = hostname();
 
     let cwd_full = std::env::current_dir()
