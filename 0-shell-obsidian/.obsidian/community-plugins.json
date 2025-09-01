@@ -1,5 +1,6 @@
 [
   "code-emitter",
   "obsidian-git",
-  "obsidian-link-embed"
+  "obsidian-link-embed",
+  "persistent-graph"
 ]

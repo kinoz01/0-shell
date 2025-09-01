@@ -37,3 +37,6 @@ A **symbolic link** acts like a shortcut in Windows. It's a separate, small file
         
     *   They are easily identifiable with an `l` at the beginning of the permissions string in `ls -l` output, and the path to the target file is shown next to it.
         
+
+
+#unix-files

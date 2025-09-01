@@ -166,6 +166,321 @@
         "scale": 0.5945930053250252,
         "close": false
       }
+    },
+    {
+      "type": "graph",
+      "ctime": 1756719927507,
+      "title": "Untitled Graph",
+      "options": {
+        "collapse-filter": true,
+        "search": "",
+        "showTags": false,
+        "showAttachments": false,
+        "hideUnresolved": false,
+        "showOrphans": true,
+        "collapse-color-groups": false,
+        "colorGroups": [
+          {
+            "query": "file:main.rs",
+            "color": {
+              "a": 1,
+              "rgb": 15343391
+            }
+          },
+          {
+            "query": "",
+            "color": {
+              "a": 1,
+              "rgb": 14725458
+            }
+          }
+        ],
+        "collapse-display": true,
+        "showArrow": false,
+        "textFadeMultiplier": 0,
+        "nodeSizeMultiplier": 1,
+        "lineSizeMultiplier": 1,
+        "collapse-forces": true,
+        "centerStrength": 0.518713248970312,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 250,
+        "scale": 0.4444444444444444,
+        "close": false
+      }
+    },
+    {
+      "type": "graph",
+      "ctime": 1756720055217,
+      "title": "Untitled Graph",
+      "options": {
+        "collapse-filter": true,
+        "search": "",
+        "showTags": false,
+        "showAttachments": false,
+        "hideUnresolved": false,
+        "showOrphans": true,
+        "collapse-color-groups": true,
+        "colorGroups": [
+          {
+            "query": "file:main.rs",
+            "color": {
+              "a": 1,
+              "rgb": 15343391
+            }
+          },
+          {
+            "query": "tag:#commands  ",
+            "color": {
+              "a": 1,
+              "rgb": 4518209
+            }
+          },
+          {
+            "query": "tag:#dispatcher  ",
+            "color": {
+              "a": 1,
+              "rgb": 8400104
+            }
+          },
+          {
+            "query": "tag:#parser  ",
+            "color": {
+              "a": 1,
+              "rgb": 16027935
+            }
+          },
+          {
+            "query": "tag:#prompt  ",
+            "color": {
+              "a": 1,
+              "rgb": 6524126
+            }
+          }
+        ],
+        "collapse-display": true,
+        "showArrow": false,
+        "textFadeMultiplier": -0.3,
+        "nodeSizeMultiplier": 1,
+        "lineSizeMultiplier": 1,
+        "collapse-forces": true,
+        "centerStrength": 0.518713248970312,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 250,
+        "scale": 0.4444444444444444,
+        "close": false
+      }
+    },
+    {
+      "type": "graph",
+      "ctime": 1756721354326,
+      "title": "Untitled Graph",
+      "options": {
+        "collapse-filter": true,
+        "search": "",
+        "showTags": false,
+        "showAttachments": false,
+        "hideUnresolved": false,
+        "showOrphans": true,
+        "collapse-color-groups": true,
+        "colorGroups": [
+          {
+            "query": "file:main.rs",
+            "color": {
+              "a": 1,
+              "rgb": 15343391
+            }
+          },
+          {
+            "query": "tag:#commands  ",
+            "color": {
+              "a": 1,
+              "rgb": 4518209
+            }
+          },
+          {
+            "query": "tag:#dispatcher  ",
+            "color": {
+              "a": 1,
+              "rgb": 8400104
+            }
+          },
+          {
+            "query": "tag:#parser  ",
+            "color": {
+              "a": 1,
+              "rgb": 16027935
+            }
+          },
+          {
+            "query": "tag:#prompt  ",
+            "color": {
+              "a": 1,
+              "rgb": 6524126
+            }
+          }
+        ],
+        "collapse-display": true,
+        "showArrow": true,
+        "textFadeMultiplier": -0.3,
+        "nodeSizeMultiplier": 1,
+        "lineSizeMultiplier": 1,
+        "collapse-forces": false,
+        "centerStrength": 0.453125,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 250,
+        "scale": 0.4444444444444444,
+        "close": false
+      }
+    },
+    {
+      "type": "graph",
+      "ctime": 1756763692326,
+      "title": "Untitled Graph",
+      "options": {
+        "collapse-filter": true,
+        "search": "",
+        "showTags": false,
+        "showAttachments": false,
+        "hideUnresolved": false,
+        "showOrphans": true,
+        "collapse-color-groups": true,
+        "colorGroups": [
+          {
+            "query": "file:main.rs",
+            "color": {
+              "a": 1,
+              "rgb": 15343391
+            }
+          },
+          {
+            "query": "tag:#commands  ",
+            "color": {
+              "a": 1,
+              "rgb": 4518209
+            }
+          },
+          {
+            "query": "tag:#dispatcher  ",
+            "color": {
+              "a": 1,
+              "rgb": 8400104
+            }
+          },
+          {
+            "query": "tag:#parser  ",
+            "color": {
+              "a": 1,
+              "rgb": 16027935
+            }
+          },
+          {
+            "query": "tag:#prompt  ",
+            "color": {
+              "a": 1,
+              "rgb": 6524126
+            }
+          },
+          {
+            "query": "tag:#unix-files  ",
+            "color": {
+              "a": 1,
+              "rgb": 16714405
+            }
+          }
+        ],
+        "collapse-display": true,
+        "showArrow": true,
+        "textFadeMultiplier": -0.3,
+        "nodeSizeMultiplier": 1,
+        "lineSizeMultiplier": 1,
+        "collapse-forces": true,
+        "centerStrength": 0.453125,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 250,
+        "scale": 0.4444444444444444,
+        "close": false
+      }
+    },
+    {
+      "type": "graph",
+      "ctime": 1756763855915,
+      "title": "Untitled Graph",
+      "options": {
+        "collapse-filter": true,
+        "search": "",
+        "showTags": false,
+        "showAttachments": false,
+        "hideUnresolved": false,
+        "showOrphans": true,
+        "collapse-color-groups": true,
+        "colorGroups": [
+          {
+            "query": "file:main.rs",
+            "color": {
+              "a": 1,
+              "rgb": 15343391
+            }
+          },
+          {
+            "query": "tag:#commands  ",
+            "color": {
+              "a": 1,
+              "rgb": 4518209
+            }
+          },
+          {
+            "query": "tag:#dispatcher  ",
+            "color": {
+              "a": 1,
+              "rgb": 8400104
+            }
+          },
+          {
+            "query": "tag:#parser  ",
+            "color": {
+              "a": 1,
+              "rgb": 16027935
+            }
+          },
+          {
+            "query": "tag:#prompt  ",
+            "color": {
+              "a": 1,
+              "rgb": 6524126
+            }
+          },
+          {
+            "query": "tag:#unix-files  ",
+            "color": {
+              "a": 1,
+              "rgb": 16714405
+            }
+          },
+          {
+            "query": "tag:#unix-files-tp  ",
+            "color": {
+              "a": 1,
+              "rgb": 13958912
+            }
+          }
+        ],
+        "collapse-display": true,
+        "showArrow": true,
+        "textFadeMultiplier": -0.3,
+        "nodeSizeMultiplier": 1,
+        "lineSizeMultiplier": 1,
+        "collapse-forces": true,
+        "centerStrength": 0.453125,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 250,
+        "scale": 0.4444444444444444,
+        "close": false
+      }
     }
   ]
 }

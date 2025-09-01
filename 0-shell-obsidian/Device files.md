@@ -189,4 +189,5 @@ When you “open” a device file, the kernel says:
 -   “Which department should handle this request?” (major)
     
 -   “Which specific employee is responsible?” (minor)
-    
+
+#unix-files

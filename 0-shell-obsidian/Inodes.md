@@ -39,3 +39,5 @@ Each inode contains a wealth of information that defines a file's existence and 
 The video below explains the structure and function of inodes in more detail.
 
 [Inode Structure](https://www.youtube.com/watch?v=tMVj22EWg6A) This video explains the role of the inode structure and its pointers to data blocks.
+
+#unix-files
