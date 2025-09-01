@@ -88,7 +88,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#unix-files-tp",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -109,8 +109,7 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -230,8 +229,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "cf28abb86b392812",
+  "active": "8114a3c5cafe4270",
   "lastOpenFiles": [
+    "column widths.md",
+    "Split files & directories.md",
     "Input Parsing.md",
     "ls.md",
     "Q&A.md",
@@ -249,7 +250,6 @@
     "Hard links.md",
     "Device files.md",
     "Type of device files.md",
-    "column widths.md",
     "practice.md",
     "prompt.md",
     "QA.md",
@@ -257,7 +257,6 @@
     "Rust Modules.md",
     "main.rs.md",
     "modules.md",
-    "List Files.md",
     "intersetion.png",
     "Untitled.canvas",
     "Untitled 1.canvas",
