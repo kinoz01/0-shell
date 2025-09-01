@@ -1,5 +1,5 @@
 pub mod mkdir;
-//pub mod ls;
+pub mod ls;
 //pub mod cd;
 //pub mod echo;
 //pub mod cat;
