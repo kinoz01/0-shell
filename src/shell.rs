@@ -1,4 +1,4 @@
-use crate::commands;
+use crate::commands::*;
 
 pub fn dispatch(input: &str) -> bool {
     let cmd_args = parse_input(input);
@@ -10,15 +10,15 @@ pub fn dispatch(input: &str) -> bool {
     let args = &cmd_args[1..];
 
     match cmd.as_str() {
-        "mkdir" => commands::mkdir::run(args),
-        //"ls" => commands::ls::run(args),
-        //"cd"  => commands::cd::run(args),
-        //"cat"  => commands::cat::run(args),
-        //"pwd" => commands::pwd::run(args),
-        //"cp" => commands::cp::run(args),
-        //"rm" => commands::rm::run(args),
-        //"mv" => commands::mv::run(args),
-        //"echo" => commands::echo::run(args),
+        "mkdir" => mkdir::run(args),
+        "ls" => ls::run(args),
+        //"cd"  => cd::run(args),
+        //"cat"  => cat::run(args),
+        //"pwd" => pwd::run(args),
+        //"cp" => cp::run(args),
+        //"rm" => rm::run(args),
+        //"mv" => mv::run(args),
+        //"echo" => echo::run(args),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),
     }
