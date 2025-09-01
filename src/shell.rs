@@ -12,13 +12,13 @@ pub fn dispatch(input: &str) -> bool {
     match cmd.as_str() {
         "mkdir" => mkdir::run(args),
         "ls" => ls::run(args),
-        //"cd"  => cd::run(args),
+        "cd"  => cd::run(args),
         //"cat"  => cat::run(args),
         //"pwd" => pwd::run(args),
         //"cp" => cp::run(args),
         //"rm" => rm::run(args),
         //"mv" => mv::run(args),
-        //"echo" => echo::run(args),
+        "echo" => echo::run(args.to_vec()),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),
     }
