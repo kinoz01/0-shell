@@ -13,7 +13,7 @@ pub fn dispatch(input: &str) -> bool {
         "mkdir" => mkdir::run(args),
         "ls" => ls::run(args),
         "cd"  => cd::run(args),
-        //"cat"  => cat::run(args),
+        "cat"  => cat::run(args),
         //"pwd" => pwd::run(args),
         //"cp" => cp::run(args),
         //"rm" => rm::run(args),
