@@ -5,7 +5,6 @@ use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
     let mut line = String::new();
-
     loop {
         // prompt
         print!("{}", shell::prompt());
@@ -22,6 +21,7 @@ fn main() -> io::Result<()> {
         if cmdline.is_empty() {
             continue;
         }
+
 
         match shell::dispatch(cmdline) {
             true => break,
