@@ -328,7 +328,6 @@ fn print_long_named(
 }
 
 /* ---------------- helpers: mode/attrs, ids, time, color ---------------- */
-
 fn is_dev(md: &fs::Metadata) -> bool {
     let ft = md.file_type();
     ft.is_block_device() || ft.is_char_device()

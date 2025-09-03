@@ -12,13 +12,14 @@ pub fn dispatch(input: &str) -> bool {
     match cmd.as_str() {
         "mkdir" => mkdir::run(args),
         "ls" => ls::run(args),
-        //"cd"  => cd::run(args),
+        "cd"  => cd::run(args),
         //"cat"  => cat::run(args),
         //"pwd" => pwd::run(args),
         //"cp" => cp::run(args),
         //"rm" => rm::run(args),
         //"mv" => mv::run(args),
         //"echo" => echo::run(args),
+        "clear" => clear::run(),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),
     }
@@ -28,30 +29,42 @@ pub fn dispatch(input: &str) -> bool {
 
 fn parse_input(s: &str) -> Vec<String> {
     #[derive(Copy, Clone, PartialEq)]
-    enum Mode {
-        Normal,
-        InSingle,
-        InDouble,
-    }
+    enum Mode { Normal, InSingle, InDouble }
 
     let mut out = Vec::new();
     let mut cur = String::new();
     let mut chars = s.chars().peekable();
     let mut mode = Mode::Normal;
 
+    // Tracks if the first character of the current word was quoted/escaped
+    let mut scaped: Option<bool> = None;
+
+    let push_word = |out: &mut Vec<String>, cur: &mut String, first: &mut Option<bool>| {
+        if !cur.is_empty() {
+            if !first.unwrap_or(false) && cur.starts_with('~') {
+                expand_tilde(cur);
+            }
+            out.push(std::mem::take(cur));
+            *first = None;
+        }
+    };
+
     while let Some(c) = chars.next() {
         match (mode, c) {
             // -------- Normal mode --------
             (Mode::Normal, '\\') => {
                 if let Some(&next) = chars.peek() {
-                    // allow escaping space, quotes, and backslash
-                    if next == ' ' || next == '"' || next == '\\' || next == '\'' {
+                    // allow escaping space, quotes, backslash, single quote, and tilde
+                    if next == ' ' || next == '"' || next == '\\' || next == '\'' || next == '~' {
+                        if cur.is_empty() { scaped = Some(true); }
                         cur.push(next);
                         chars.next();
                     } else {
+                        if cur.is_empty() { scaped = Some(false); }
                         cur.push('\\');
                     }
                 } else {
+                    if cur.is_empty() { scaped = Some(false); }
                     cur.push('\\');
                 }
             }
@@ -61,43 +74,57 @@ fn parse_input(s: &str) -> Vec<String> {
             (Mode::Normal, '\'') => {
                 mode = Mode::InSingle;
             }
-            (Mode::Normal, c) if c.is_whitespace() => {
-                if !cur.is_empty() {
-                    out.push(std::mem::take(&mut cur));
-                }
+            (Mode::Normal, ch) if ch.is_whitespace() => {
+                push_word(&mut out, &mut cur, &mut scaped);
             }
-            (Mode::Normal, other) => cur.push(other),
+            (Mode::Normal, other) => {
+                if cur.is_empty() { scaped = Some(false); }
+                cur.push(other);
+            }
 
             // -------- Inside "double quotes" --------
             (Mode::InDouble, '\\') => {
                 if let Some(&next) = chars.peek() {
                     // escape " \ and space inside "
                     if next == '"' || next == '\\' || next == ' ' {
+                        if cur.is_empty() { scaped = Some(true); }
                         cur.push(next);
                         chars.next();
                     } else {
+                        if cur.is_empty() { scaped = Some(true); }
                         cur.push('\\');
                     }
                 } else {
+                    if cur.is_empty() { scaped = Some(true); }
                     cur.push('\\');
                 }
             }
             (Mode::InDouble, '"') => {
                 mode = Mode::Normal;
             }
-            (Mode::InDouble, other) => cur.push(other),
+            (Mode::InDouble, other) => {
+                if cur.is_empty() { scaped = Some(true); }
+                cur.push(other);
+            }
 
             // -------- Inside 'single quotes' --------
             (Mode::InSingle, '\'') => {
                 mode = Mode::Normal;
             }
-            (Mode::InSingle, other) => cur.push(other),
+            (Mode::InSingle, other) => {
+                if cur.is_empty() { scaped = Some(true); }
+                cur.push(other);
+            }
         }
     }
 
     if !cur.is_empty() {
+        if !scaped.unwrap_or(false) && cur.starts_with('~') {
+            expand_tilde(&mut cur);
+        }
         out.push(cur);
     }
+
     out
 }
 
@@ -138,4 +165,14 @@ fn hostname() -> String {
         return s.trim().to_string();
     }
     "host".to_string()
+}
+
+fn expand_tilde(word: &mut String) {
+    if let Ok(home) = std::env::var("HOME") {
+        if word == "~" {
+            *word = home;
+        } else if let Some(rest) = word.strip_prefix("~/") {
+            *word = format!("{home}/{rest}");
+        }
+    }
 }
