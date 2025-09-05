@@ -5,6 +5,8 @@ use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
     let mut line = String::new();
+    print!("\x1b[2J\x1b[H");
+
     loop {
         // prompt
         print!("{}", shell::prompt());

@@ -52,7 +52,7 @@ pub fn run(args: &[String]) {
                 .collect();
             let widths = compute_widths(&items);
             for (p, md) in &files {
-                let _ = print_long(Path::new(p), md, f, &widths);
+                print_long(Path::new(p), md, f, &widths);
             }
         } else {
             for (p, md) in &files {
@@ -102,18 +102,10 @@ fn parse_flags(args: &[String]) -> Result<Flags, String> {
         if !after_ddash && a.starts_with('-') && a != "-" {
             for ch in a.chars().skip(1) {
                 match ch {
-                    'a' => {
-                        flags.a = true;
-                    }
-                    'l' => {
-                        flags.l = true;
-                    }
-                    'F' => {
-                        flags.f = true;
-                    }
-                    _ => {
-                        return Err(format!("ls: invalid option -- '{}'", ch));
-                    }
+                    'a' => flags.a = true,
+                    'l' => flags.l = true,
+                    'F' => flags.f = true,
+                    _ => return Err(format!("ls: invalid option -- '{}'", ch)), 
                 }
             }
         }
@@ -178,7 +170,7 @@ fn list_dir(dir: &Path, show_all: bool, long: bool, classify: bool) -> io::Resul
             .collect();
         let widths = compute_widths(&items);
         for (name, path, md) in entries {
-            let _ = print_long_named(&name, &path, &md, classify, &widths);
+            print_long_named(&name, &path, &md, classify, &widths);
         }
     } else {
         for (name, path, md) in entries {
@@ -197,7 +189,7 @@ fn total_blocks(dir: &Path, show_all: bool) -> io::Result<u64> {
 
     // Only count "." and ".." when -a is on (to match the listing)
     if show_all {
-        if let Ok(md) = fs::symlink_metadata(dir.join("."))  {
+        if let Ok(md) = fs::symlink_metadata(dir.join(".")) {
             total = total.saturating_add(md.blocks());
         }
         if let Ok(md) = fs::symlink_metadata(dir.join("..")) {
@@ -252,21 +244,15 @@ fn compute_widths(items: &[(&Path, &fs::Metadata)]) -> Widths {
     w
 }
 
-fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) -> io::Result<()> {
+fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
     let name = path
         .file_name()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_else(|| path.to_string_lossy().into_owned());
-    print_long_named(&name, path, md, classify, w)
+    print_long_named(&name, path, md, classify, w);
 }
 
-fn print_long_named(
-    name: &str,
-    path: &Path,
-    md: &fs::Metadata,
-    classify: bool,
-    w: &Widths
-) -> io::Result<()> {
+fn print_long_named(name: &str, path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
     let perms = mode_string(path, md);
     let (user, group) = uid_gid(md.uid(), md.gid());
     let nlink = md.nlink();
@@ -324,7 +310,6 @@ fn print_long_named(
         }
     }
     println!();
-    Ok(())
 }
 
 /* ---------------- helpers: mode/attrs, ids, time, color ---------------- */
