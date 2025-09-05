@@ -17,7 +17,7 @@ pub fn dispatch(input: &str) -> bool {
         //"pwd" => pwd::run(args),
         //"cp" => cp::run(args),
         //"rm" => rm::run(args),
-        //"mv" => mv::run(args),
+        "mv" => mv::run(args.to_vec()),
         "echo" => echo::run(args.to_vec()),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),
