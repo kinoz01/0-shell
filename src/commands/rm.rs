@@ -38,6 +38,8 @@ pub fn run(args: &[String]){
                 }
             }
         }
+    } else {
+        println!("rm: missing operand");
     }
 
 }
