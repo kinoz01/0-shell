@@ -1,4 +1,12 @@
 use crate::commands::*;
+use std::io::{ self, Write };
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum Mode {
+    Normal,
+    InSingle,
+    InDouble,
+}
 
 pub fn dispatch(input: &str) -> bool {
     let cmd_args = parse_input(input);
@@ -12,25 +20,86 @@ pub fn dispatch(input: &str) -> bool {
     match cmd.as_str() {
         "mkdir" => mkdir::run(args),
         "ls" => ls::run(args),
-        "cd"  => cd::run(args),
+        "cd" => cd::run(args),
         //"cat"  => cat::run(args),
-        //"pwd" => pwd::run(args),
-        //"cp" => cp::run(args),
-        //"rm" => rm::run(args),
-        //"mv" => mv::run(args),
-        //"echo" => echo::run(args),
+        //"pwd"  => pwd::run(args),
+        //"cp"   => cp::run(args),
+        //"rm"   => rm::run(args),
+        //"mv"   => mv::run(args),
+        "echo" => echo::run(args.to_vec()),
         "clear" => clear::run(),
-        "exit" => return true,
+        "exit" => {
+            return true;
+        }
         other => eprintln!("Command '{}' not found", other),
     }
 
-    return false;
+    false
 }
 
-fn parse_input(s: &str) -> Vec<String> {
-    #[derive(Copy, Clone, PartialEq)]
-    enum Mode { Normal, InSingle, InDouble }
+/// Lightweight scanner to check if the input ends with unmatched quotes.
+/// Returns the final mode. If it’s not `Mode::Normal`, you’re still inside quotes.
+pub fn quote_status(s: &str) -> Mode {
+    let mut mode = Mode::Normal;
+    let mut chars = s.chars().peekable();
 
+    while let Some(c) = chars.next() {
+        match (mode, c) {
+            // ----- Normal -----
+            (Mode::Normal, '\\') => {
+                if let Some(&next) = chars.peek() {
+                    // In Normal mode you allow escaping space, " \ ' ~
+                    if next == ' ' || next == '"' || next == '\\' || next == '\'' || next == '~' {
+                        // consume escaped
+                        chars.next();
+                    }
+                }
+            }
+            (Mode::Normal, '"') => {
+                mode = Mode::InDouble;
+            }
+            (Mode::Normal, '\'') => {
+                mode = Mode::InSingle;
+            }
+            (Mode::Normal, _) => {}
+
+            // ----- Inside "..." -----
+            (Mode::InDouble, '\\') => {
+                if let Some(&next) = chars.peek() {
+                    // Inside "": escape " \ and space
+                    if next == '"' || next == '\\' || next == ' ' {
+                        chars.next();
+                    }
+                }
+            }
+            (Mode::InDouble, '"') => {
+                mode = Mode::Normal;
+            }
+            (Mode::InDouble, _) => {}
+
+            // ----- Inside '...' -----
+            (Mode::InSingle, '\'') => {
+                mode = Mode::Normal;
+            }
+            (Mode::InSingle, _) => {}
+        }
+    }
+
+    mode
+}
+
+fn expand_tilde(word: &mut String) {
+    if let Ok(home) = std::env::var("HOME") {
+        if word == "~" {
+            *word = home;
+        } else if let Some(rest) = word.strip_prefix("~/") {
+            *word = format!("{home}/{rest}");
+        }
+    }
+}
+
+/// Tokenizer (your original, with tiny fixes to call expand_tilde with &mut)
+fn parse_input(s: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut cur = String::new();
     let mut chars = s.chars().peekable();
@@ -56,15 +125,21 @@ fn parse_input(s: &str) -> Vec<String> {
                 if let Some(&next) = chars.peek() {
                     // allow escaping space, quotes, backslash, single quote, and tilde
                     if next == ' ' || next == '"' || next == '\\' || next == '\'' || next == '~' {
-                        if cur.is_empty() { scaped = Some(true); }
+                        if cur.is_empty() {
+                            scaped = Some(true);
+                        }
                         cur.push(next);
                         chars.next();
                     } else {
-                        if cur.is_empty() { scaped = Some(false); }
+                        if cur.is_empty() {
+                            scaped = Some(false);
+                        }
                         cur.push('\\');
                     }
                 } else {
-                    if cur.is_empty() { scaped = Some(false); }
+                    if cur.is_empty() {
+                        scaped = Some(false);
+                    }
                     cur.push('\\');
                 }
             }
@@ -78,7 +153,9 @@ fn parse_input(s: &str) -> Vec<String> {
                 push_word(&mut out, &mut cur, &mut scaped);
             }
             (Mode::Normal, other) => {
-                if cur.is_empty() { scaped = Some(false); }
+                if cur.is_empty() {
+                    scaped = Some(false);
+                }
                 cur.push(other);
             }
 
@@ -87,15 +164,21 @@ fn parse_input(s: &str) -> Vec<String> {
                 if let Some(&next) = chars.peek() {
                     // escape " \ and space inside "
                     if next == '"' || next == '\\' || next == ' ' {
-                        if cur.is_empty() { scaped = Some(true); }
+                        if cur.is_empty() {
+                            scaped = Some(true);
+                        }
                         cur.push(next);
                         chars.next();
                     } else {
-                        if cur.is_empty() { scaped = Some(true); }
+                        if cur.is_empty() {
+                            scaped = Some(true);
+                        }
                         cur.push('\\');
                     }
                 } else {
-                    if cur.is_empty() { scaped = Some(true); }
+                    if cur.is_empty() {
+                        scaped = Some(true);
+                    }
                     cur.push('\\');
                 }
             }
@@ -103,7 +186,9 @@ fn parse_input(s: &str) -> Vec<String> {
                 mode = Mode::Normal;
             }
             (Mode::InDouble, other) => {
-                if cur.is_empty() { scaped = Some(true); }
+                if cur.is_empty() {
+                    scaped = Some(true);
+                }
                 cur.push(other);
             }
 
@@ -112,7 +197,9 @@ fn parse_input(s: &str) -> Vec<String> {
                 mode = Mode::Normal;
             }
             (Mode::InSingle, other) => {
-                if cur.is_empty() { scaped = Some(true); }
+                if cur.is_empty() {
+                    scaped = Some(true);
+                }
                 cur.push(other);
             }
         }
@@ -133,13 +220,15 @@ pub fn prompt() -> String {
     const BLUE: &str = "\x1b[34m";
     const RESET: &str = "\x1b[0m";
 
-    let user = std::env::var("USER")
+    let user = std::env
+        ::var("USER")
         .or_else(|_| std::env::var("LOGNAME"))
         .unwrap_or_else(|_| "user".to_string());
 
     let host = hostname();
 
-    let cwd_full = std::env::current_dir()
+    let cwd_full = std::env
+        ::current_dir()
         .ok()
         .and_then(|p| p.into_os_string().into_string().ok())
         .unwrap_or_else(|| "?".to_string());
@@ -167,12 +256,48 @@ fn hostname() -> String {
     "host".to_string()
 }
 
-fn expand_tilde(word: &mut String) {
-    if let Ok(home) = std::env::var("HOME") {
-        if word == "~" {
-            *word = home;
-        } else if let Some(rest) = word.strip_prefix("~/") {
-            *word = format!("{home}/{rest}");
+/// Read a full command, possibly spanning multiple lines if quotes are left open.
+/// Returns None on EOF so the caller can exit cleanly.
+pub fn read_command() -> io::Result<Option<String>> {
+    let mut buf = String::new();
+
+    // ----- primary prompt -----
+    print!("{}", prompt());
+    io::stdout().flush()?;
+    let mut line = String::new();
+    let n = io::stdin().read_line(&mut line)?;
+    if n == 0 {
+        return Ok(None); // EOF at primary prompt
+    }
+
+    // Keep the line without the trailing newline that read_line adds.
+    buf.push_str(line.trim_end_matches('\n'));
+
+    // ----- while quotes remain open, keep reading continuation lines -----
+    loop {
+        match quote_status(&buf) {
+            Mode::Normal => {
+                return Ok(Some(buf));
+            }
+            Mode::InSingle => {
+                print!(" > ");
+                io::stdout().flush()?;
+            }
+            Mode::InDouble => {
+                print!(" > ");
+                io::stdout().flush()?;
+            }
         }
+
+        line.clear();
+        let n = io::stdin().read_line(&mut line)?;
+        if n == 0 {
+            // EOF while waiting for closing quote => treat as user abort
+            return Ok(None);
+        }
+
+        // Preserve newlines inside quoted strings by inserting '\n' between lines.
+        buf.push('\n');
+        buf.push_str(line.trim_end_matches('\n'));
     }
 }

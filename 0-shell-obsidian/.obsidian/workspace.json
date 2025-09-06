@@ -14,12 +14,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "print_long().md",
+                "file": "main.rs.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "print_long()"
+              "title": "main.rs"
             }
           },
           {
@@ -230,11 +230,11 @@
   },
   "active": "5e28fe5c4e4f0346",
   "lastOpenFiles": [
-    "ls -l.md",
+    "column_widths.md",
     "print_long().md",
+    "ls -l.md",
     "List Files.md",
     "print_long.md",
-    "column_widths.md",
     "symlinks tp.md",
     "Hard links tp.md",
     "Hard links vs Symlinks.md",
