@@ -394,7 +394,6 @@ fn mode_string(path: &Path, md: &fs::Metadata) -> String {
 }
 
 fn has_xattrs(path: &Path) -> bool {
-    // libc::listxattr(path, NULL, 0) -> size; >0 means there are xattrs
     let c = match CString::new(path.as_os_str().as_bytes()) {
         Ok(v) => v,
         Err(_) => {
