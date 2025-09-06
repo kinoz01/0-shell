@@ -6,67 +6,17 @@
   "hideUnresolved": false,
   "showOrphans": true,
   "collapse-color-groups": true,
-  "colorGroups": [
-    {
-      "query": "file:main.rs",
-      "color": {
-        "a": 1,
-        "rgb": 15343391
-      }
-    },
-    {
-      "query": "tag:#commands  ",
-      "color": {
-        "a": 1,
-        "rgb": 4518209
-      }
-    },
-    {
-      "query": "tag:#dispatcher  ",
-      "color": {
-        "a": 1,
-        "rgb": 8400104
-      }
-    },
-    {
-      "query": "tag:#parser  ",
-      "color": {
-        "a": 1,
-        "rgb": 16027935
-      }
-    },
-    {
-      "query": "tag:#prompt  ",
-      "color": {
-        "a": 1,
-        "rgb": 6524126
-      }
-    },
-    {
-      "query": "tag:#unix-files  ",
-      "color": {
-        "a": 1,
-        "rgb": 16714405
-      }
-    },
-    {
-      "query": "tag:#unix-files-tp  ",
-      "color": {
-        "a": 1,
-        "rgb": 13958912
-      }
-    }
-  ],
+  "colorGroups": [],
   "collapse-display": true,
-  "showArrow": true,
-  "textFadeMultiplier": -0.3,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
   "nodeSizeMultiplier": 1,
   "lineSizeMultiplier": 1,
   "collapse-forces": true,
-  "centerStrength": 0.453125,
+  "centerStrength": 0.518713248970312,
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 0.4444444444444444,
+  "scale": 0.6666666666666666,
   "close": false
 }

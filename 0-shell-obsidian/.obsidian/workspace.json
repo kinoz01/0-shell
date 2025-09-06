@@ -15,7 +15,7 @@
               "type": "markdown",
               "state": {
                 "file": "main.rs.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -88,7 +88,7 @@
               "type": "search",
               "state": {
                 "query": "",
-                "matchingCase": false,
+                "matchingCase": true,
                 "explainSearch": false,
                 "collapseAll": false,
                 "extraContext": false,
@@ -108,7 +108,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -230,6 +231,11 @@
   },
   "active": "5e28fe5c4e4f0346",
   "lastOpenFiles": [
+    "prompt.md",
+    "main.rs.md",
+    "peek().md",
+    "Input Parsing.md",
+    "main return.md",
     "column_widths.md",
     "print_long().md",
     "ls -l.md",
@@ -241,7 +247,6 @@
     "Hard links.md",
     "Device files.md",
     "Split files & directories.md",
-    "Input Parsing.md",
     "ls.md",
     "Q&A.md",
     "infinite loops.md",
@@ -252,10 +257,6 @@
     "cd.md",
     "Inodes.md",
     "Type of device files.md",
-    "practice.md",
-    "prompt.md",
-    "QA.md",
-    "practice 🔗.md",
     "intersetion.png",
     "Untitled.canvas",
     "Untitled 1.canvas",

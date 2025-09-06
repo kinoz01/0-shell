@@ -37,7 +37,6 @@ pub fn dispatch(input: &str) -> bool {
     false
 }
 
-// Tokenizer
 fn parse_input(s: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut cur = String::new();
@@ -73,7 +72,6 @@ fn parse_input(s: &str) -> Vec<String> {
                         if cur.is_empty() {
                             scaped = Some(false);
                         }
-                        cur.push('\\');
                     }
                 } else {
                     if cur.is_empty() {
@@ -174,23 +172,19 @@ pub fn read_command() -> io::Result<Option<String>> {
     let mut line = String::new();
     let n = io::stdin().read_line(&mut line)?;
     if n == 0 {
-        return Ok(None); // EOF at primary prompt
+        return Ok(None); // EOF at primary prompt (ctr + d)
     }
 
     // Keep the line without the trailing newline that read_line adds.
     buf.push_str(line.trim_end_matches('\n'));
-
+    
     // ----- while quotes remain open, keep reading continuation lines -----
     loop {
         match quote_status(&buf) {
             Mode::Normal => {
                 return Ok(Some(buf));
             }
-            Mode::InSingle => {
-                print!(" > ");
-                io::stdout().flush()?;
-            }
-            Mode::InDouble => {
+            Mode::InSingle | Mode::InDouble => {
                 print!(" > ");
                 io::stdout().flush()?;
             }
@@ -199,7 +193,8 @@ pub fn read_command() -> io::Result<Option<String>> {
         line.clear();
         let n = io::stdin().read_line(&mut line)?;
         if n == 0 {
-            return Ok(None);
+            println!("\nUnexpected EOF");
+            return Ok(Some(String::new()));
         }
 
         // Preserve newlines inside quoted strings by inserting '\n' between lines.
@@ -260,7 +255,7 @@ pub fn quote_status(s: &str) -> Mode {
             // normal
             (Mode::Normal, '\\') => {
                 if let Some(&next) = chars.peek() {
-                    if next == ' ' || next == '"' || next == '\\' || next == '\'' || next == '~' {
+                    if next == '"' || next == '\'' {
                         chars.next();
                     }
                 }
