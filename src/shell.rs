@@ -15,7 +15,7 @@ pub fn dispatch(input: &str) -> bool {
         "cd"  => cd::run(args),
         "cat"  => cat::run(args),
         "pwd" => pwd::run(),
-        //"cp" => cp::run(args),
+        "cp" => cp::run(args),
         // "rm" => rm::run(args),
         //"mv" => mv::run(args),
         "echo" => echo::run(args.to_vec()),
