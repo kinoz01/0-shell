@@ -165,7 +165,7 @@ fn expand_tilde(word: &mut String) {
 // Read a full command, possibly spanning multiple lines if quotes are left open.
 pub fn read_command() -> io::Result<Option<String>> {
     let mut buf = String::new();
-    let mut fill = false;
+    let mut filled = false;
 
     // ----- primary prompt -----
     print!("{}", prompt());
@@ -189,18 +189,18 @@ pub fn read_command() -> io::Result<Option<String>> {
                 if line.ends_with('\n') {
                     print!(" > ");
                     io::stdout().flush()?;
-                    fill = false;
+                    filled = false;
                 }
             }
         }
 
         line.clear();
         let n = io::stdin().read_line(&mut line)?;
-        if n != 0 && !fill {
-            fill = true;
+        if n != 0 && !filled {
+            filled = true;
         }
 
-        if n == 0 && !fill {
+        if n == 0 && !filled {
             println!("\nUnexpected EOF");
             return Ok(Some(String::new()));
         }
