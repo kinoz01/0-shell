@@ -29,7 +29,6 @@ pub fn dispatch(input: &str) -> bool {
         "echo" => echo::run(args.to_vec()),
         "clear" => clear::run(),
         "exit" => return true,
-        
         other => eprintln!("Command '{}' not found", other),
     }
 
