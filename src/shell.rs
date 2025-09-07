@@ -165,6 +165,7 @@ fn expand_tilde(word: &mut String) {
 // Read a full command, possibly spanning multiple lines if quotes are left open.
 pub fn read_command() -> io::Result<Option<String>> {
     let mut buf = String::new();
+    let mut fill = false;
 
     // ----- primary prompt -----
     print!("{}", prompt());
@@ -176,8 +177,8 @@ pub fn read_command() -> io::Result<Option<String>> {
     }
 
     // Keep the line without the trailing newline that read_line adds.
-    buf.push_str(line.trim_end_matches('\n'));
-    
+    buf.push_str(&line);
+
     // ----- while quotes remain open, keep reading continuation lines -----
     loop {
         match quote_status(&buf) {
@@ -185,21 +186,26 @@ pub fn read_command() -> io::Result<Option<String>> {
                 return Ok(Some(buf));
             }
             Mode::InSingle | Mode::InDouble => {
-                print!(" > ");
-                io::stdout().flush()?;
+                if line.ends_with('\n') {
+                    print!(" > ");
+                    io::stdout().flush()?;
+                    fill = false;
+                }
             }
         }
 
         line.clear();
         let n = io::stdin().read_line(&mut line)?;
-        if n == 0 {
+        if n != 0 && !fill {
+            fill = true;
+        }
+
+        if n == 0 && !fill {
             println!("\nUnexpected EOF");
             return Ok(Some(String::new()));
         }
-
-        // Preserve newlines inside quoted strings by inserting '\n' between lines.
-        buf.push('\n');
-        buf.push_str(line.trim_end_matches('\n'));
+        
+        buf.push_str(&line); 
     }
 }
 
