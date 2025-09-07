@@ -28,9 +28,8 @@ pub fn dispatch(input: &str) -> bool {
         //"mv"   => mv::run(args),
         "echo" => echo::run(args.to_vec()),
         "clear" => clear::run(),
-        "exit" => {
-            return true;
-        }
+        "exit" => return true,
+        
         other => eprintln!("Command '{}' not found", other),
     }
 
@@ -173,10 +172,9 @@ pub fn read_command() -> io::Result<Option<String>> {
     let mut line = String::new();
     let n = io::stdin().read_line(&mut line)?;
     if n == 0 {
-        return Ok(None); // EOF at primary prompt (ctr + d)
+        return Ok(None); // EOF as line (ctr+d)
     }
 
-    // Keep the line without the trailing newline that read_line adds.
     buf.push_str(&line);
 
     // ----- while quotes remain open, keep reading continuation lines -----
