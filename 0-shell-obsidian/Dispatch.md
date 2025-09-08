@@ -1,227 +1,4 @@
 ```rust
-use crate::commands;
-use std::fmt;
-
-#[derive(Debug)]
-pub enum ShellError {
-    Message(String),
-}
-
-impl fmt::Display for ShellError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ShellError::Message(m) => write!(f, "{m}"),
-        }
-    }
-}
-
-pub fn dispatch(input: &str) -> Result<bool, ShellError> {
-    let cmd_args = parse_input(input);
-    if cmd_args.is_empty() {
-        return Ok(true);
-    }
-
-    let cmd = &cmd_args[0];
-    let args = &cmd_args[1..];
-
-    match cmd.as_str() {
-        "mkdir" => {
-            commands::mkdir::run(args).map_err(ShellError::Message)?;
-            Ok(true)
-        }
-
-        "exit" => Ok(false),
-
-        other => {
-            Err(ShellError::Message(format!("Command '{}' not found", other)))
-        }
-    }
-}
-```
-
-
-## 1\. Module Imports
-
-```rust
-use crate::commands;
-use std::fmt;
-```
-
--   `crate::commands`: Brings in your own shell’s `commands` module (contains `mkdir`, etc.)
-    
--   `std::fmt`: For formatting output (used in implementing `Display` for `ShellError`)
-    
-
----
-
-## 2\. Custom Error Type
-
-```rust
-#[derive(Debug)]
-pub enum ShellError {
-    Message(String),
-}
-```
-
--   This enum defines one error variant: `Message(String)`
-    
--   You can later expand this to include variants like `IoError`, `CommandNotFound`, etc.
-    
-
----
-## 3\. Implementing `Display` for `ShellError`
-
-```rust
-impl fmt::Display for ShellError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ShellError::Message(m) => write!(f, "{m}"),
-        }
-    }
-}
-```
-
-### Why?
-
--   So you can **print the error nicely** using `{}` (e.g., in `eprintln!("{e}")`)
-    
--   Rust requires this when using error-handling tools like `?` with custom errors
-    
-
----
-
-## 4\. The `dispatch` Function
-
-```rust
-pub fn dispatch(input: &str) -> Result<bool, ShellError>
-```
-
-### Purpose:
-
--   Takes user input like `mkdir myfolder`
-    
--   Parses it into command + arguments
-    
--   Dispatches the command
-    
--   Returns:
-    
-    -   `Ok(true)` → continue the shell
-        
-    -   `Ok(false)` → exit the shell
-        
-    -   `Err(ShellError)` → print an error
-        
-
----
-
-### [[Input Parsing]]
-
-```rust
-let cmd_args = parse_input(input);
-if cmd_args.is_empty() {
-    return Ok(true);
-}
-```
-
--   `parse_input` splits the input into tokens (e.g., `["mkdir", "myfolder"]`)
-    
--   If the user hits Enter without typing anything → do nothing and keep running
-    
-
----
-
-### Splitting Command and Arguments
-
-```rust
-let cmd = &cmd_args[0];
-let args = &cmd_args[1..];
-```
-
--   `cmd` = first word, the command name (e.g., `"mkdir"`)
-    
--   `args` = remaining items, passed to the command (e.g., `["myfolder"]`)
-    
-
----
-
-## 5\. Dispatching the Command
-
-```rust
-commands::mkdir::run(args).map_err(ShellError::Message)?;
-```
-
-### What This [[map_err|Line]] **Does**
-
-1.  **Calls the `run` function** inside your [[mkdir]] command module:
-    
-    ```rust
-    commands::mkdir::run(args)
-    ```
-    
-    -   This returns a `Result<(), String>`.
-        
-    -   If it runs successfully, everything proceeds as normal.
-        
-    -   If it returns an `Err(e)`, we move to the next step.
-        
-2.  **Converts the error into your custom `ShellError` type**:
-    
-    ```rust
-    .map_err(ShellError::Message)
-    ```
-    
-    -   Takes the error message (`e`) and wraps it like:
-        
-        ```rust
-        ShellError::Message(e)
-        ```
-        
-1.  **Propagates the error using `?`**:
-    -   If an error occurred, this exits the current function (`dispatch`) early and returns the `ShellError` up to the caller.
-        
-    -   If everything is `Ok`, the function continues.
-        
-
----
-
-### ❌ Important: It Does **Not** Print Anything
-
-This line:
-
-```rust
-.map_err(ShellError::Message)?;
-```
-
-**only transforms and forwards** the error — it does **not print it**.
-
----
-
-### ✅ Where the Error **Is Printed**
-
-In your main loop we have the actual [[eprintln!]] like this
-
-```rust
-match shell::dispatch(cmdline) {
-    Ok(true) => {}               // Keep running
-    Ok(false) => break,         // Exit
-    Err(e) => eprintln!("{e}"), // Print the error here
-}
-```
-
--   This is where the error message from `ShellError` actually gets printed to the terminal.
-    
--   It uses the `Display` implementation of `ShellError`, which formats the error message like:
-    
-
-```rust
-Command 'foo' not found
-```
-
-
-# Code Update
-
-```rust
 pub fn dispatch(input: &str) -> bool {
     let cmd_args = parse_input(input);
     if cmd_args.is_empty() {
@@ -232,18 +9,152 @@ pub fn dispatch(input: &str) -> bool {
     let args = &cmd_args[1..];
 
     match cmd.as_str() {
-        "mkdir" => commands::mkdir::run(args),
-        "ls" => commands::ls::run(args),
-        "cd"    => commands::cd::run(args),
+        "mkdir" => mkdir::run(args),
+        "ls" => ls::run(args),
+        "cd" => cd::run(args),
+        //"cat"  => cat::run(args),
+        //"pwd"  => pwd::run(args),
+        //"cp"   => cp::run(args),
+        //"rm"   => rm::run(args),
+        //"mv"   => mv::run(args),
+        "echo" => echo::run(args.to_vec()),
+        "clear" => clear::run(),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),
     }
 
+    false
+}
+```
+
+This function, `dispatch`, is part of the logic that processes and executes shell commands entered by the user. It's responsible for interpreting the input string, determining which command is being called, and delegating execution to the appropriate module. Here's a detailed explanation of how it works:
+
+---
+
+### Function Signature
+
+```rust
+pub fn dispatch(input: &str) -> bool
+```
+
+-   `pub`: This function is public, meaning it can be accessed from other modules.
+    
+-   `input: &str`: Takes a string slice representing the full command-line input from the user.
+    
+-   `-> bool`: Returns a boolean. This is used to signal whether the shell should exit (`true`) or continue running (`false`).
+    
+
+---
+
+### Step 1: [[Input Parsing]]
+
+```rust
+let cmd_args = parse_input(input);
+```
+
+-   `parse_input(input)`: This function splits the input into command and arguments. For example:
+    
+    -   Input: `"mkdir new_folder"`
+        
+    -   Output: `["mkdir", "new_folder"]` as a `Vec<String>`
+        
+
+---
+
+### Step 2: Handle Empty Input
+
+```rust
+if cmd_args.is_empty() {
     return false;
 }
 ```
 
-We updated the *dispatcher* to only return true to break the loop and false to keep it running in `main.rs`, also now all prints are done in the commands crate, so we removed the custom error message system.
+-   If the user input is empty or only whitespace, return `false` to indicate nothing needs to be done and continue the shell loop.
+    
+
+---
+
+### Step 3: Split Command and Arguments
+
+```rust
+let cmd = &cmd_args[0];
+let args = &cmd_args[1..];
+```
+
+-   `cmd`: The command itself, e.g., `"mkdir"`, `"ls"`, etc.
+    
+-   `args`: A slice of the remaining elements, representing the command's arguments.
+    
+
+---
+
+### Step 4: Match and Dispatch Commands
+
+```rust
+match cmd.as_str() {
+```
+
+-   Converts `cmd` to a `&str` and matches it against known command strings.
+    
+
+For each case:
+
+```rust
+"mkdir" => mkdir::run(args),
+"ls" => ls::run(args),
+"cd" => cd::run(args),
+```
+
+-   These call corresponding `run` functions in each module, passing the arguments.
+    
+
+This structure makes the shell modular: each command (like `mkdir`, `ls`, `cd`, etc.) is handled by a dedicated module, which simplifies maintenance and testing.
+
+---
+
+### Special Cases
+
+```rust
+"echo" => echo::run(args.to_vec()),
+```
+
+-   `args.to_vec()`: Clones the argument slice into a new `Vec<String>`. Likely required because the `echo::run` function needs ownership of the data rather than a borrowed slice.
+    
+
+```rust
+"clear" => clear::run(),
+```
+
+-   `clear` doesn’t require arguments, so it is called directly.
+    
+
+```rust
+"exit" => return true,
+```
+
+-   If the command is `"exit"`, the function returns `true`, telling the main loop to break and end the shell session.
+    
+
+---
+
+### Default Case
+
+```rust
+other => eprintln!("Command '{}' not found", other),
+```
+
+-   If the command doesn't match any known one, an error message is printed to `stderr`.
+    
+
+---
+
+### Final Return
+
+```rust
+false
+```
+
+-   If the shell didn’t exit, return `false` to keep the REPL loop running.
 
 #### Commands:
 - [[mkdir]]

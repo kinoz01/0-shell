@@ -102,3 +102,14 @@ fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
         
     -   `w`: precomputed column widths (from your `compute_widths`).
         
+
+ **Summary**
+
+| Part | Purpose |
+| --- | --- |
+| `file_name()` | Gets the last component of the path, if present |
+| `to_string_lossy()` | Safely converts a possibly non-UTF8 file name to a valid UTF-8 string |
+| `into_owned()` | Ensures we get a `String` from a `Cow<str>` |
+| `unwrap_or_else(...)` | Fallback to full path string if no file name exists |
+
+This approach is robust, user-safe, and compatible with unusual file names.

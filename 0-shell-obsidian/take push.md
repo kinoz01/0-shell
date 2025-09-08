@@ -111,3 +111,20 @@ This demonstrates how `take` transfers ownership of the string efficiently.
 -   Avoids creating a new string manually or cloning unnecessarily
     
 -   Keeps `cur` available for further use without re-declaring or allocating manually
+
+## Note:
+### Why don't we need `&mut` explicitly in our closure helper?
+
+Look at the full call:
+
+```rust
+std::mem::take(cur)
+```
+
+Where `cur` has type `&mut String`.
+
+So you're **already passing a mutable reference** (`&mut String`) into the closure. Inside the closure, the variable `cur` is already of type `&mut String`. Therefore:
+
+-   When you write `std::mem::take(cur)`, you're passing a `&mut String` to a function that expects `&mut T`.
+    
+-   Rust does **not** need another `&mut` (like `&mut cur`), because that would make the type `&mut &mut String`, which is incorrect.

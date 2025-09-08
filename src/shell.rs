@@ -41,89 +41,77 @@ fn parse_input(s: &str) -> Vec<String> {
     let mut chars = s.chars().peekable();
     let mut mode = Mode::Normal;
 
-    // Tracks if the first character of the current word was quoted/escaped
-    let mut scaped: Option<bool> = None;
+    // started: have we begun the current word?
+    // first_qe: the very first char of the word was quoted or escaped
+    let mut started = false;
+    let mut first_qe = false;
 
-    let push_word = |out: &mut Vec<String>, cur: &mut String, first: &mut Option<bool>| {
+    let push_word = |out: &mut Vec<String>, cur: &mut String, started: &mut bool, first_qe: &mut bool| {
         if !cur.is_empty() {
-            if !first.unwrap_or(false) && cur.starts_with('~') {
+            if !*first_qe && cur.starts_with('~') {
                 expand_tilde(cur);
             }
             out.push(std::mem::take(cur));
-            *first = None;
         }
+        *started = false;
+        *first_qe = false;
     };
 
     while let Some(c) = chars.next() {
         match (mode, c) {
             // -------- Normal mode --------
             (Mode::Normal, '\\') => {
-                if let Some(&next) = chars.peek() {
-                    // allow escaping space, quotes, backslash, single quote, and tilde
-                    if next == ' ' || next == '"' || next == '\\' || next == '\'' || next == '~' {
-                        if cur.is_empty() {
-                            scaped = Some(true);
-                        }
+                match chars.peek().copied() {
+                    Some(next) if matches!(next, ' ' | '"' | '\\' | '\'' | '~') => {
+                        if !started { started = true; first_qe = true; }
                         cur.push(next);
                         chars.next();
-                    } else {
-                        if cur.is_empty() {
-                            scaped = Some(false);
-                        }
                     }
-                } else {
-                    if cur.is_empty() {
-                        scaped = Some(false);
+                    Some(_) => {
+                        if !started { started = true; }
+                        cur.push('\\');
                     }
-                    cur.push('\\');
+                    None => {
+                        if !started { started = true; }
+                        cur.push('\\');
+                    }
                 }
             }
             (Mode::Normal, '"') => {
+                // entering "
+                if !started { started = true; first_qe = true; }
                 mode = Mode::InDouble;
             }
             (Mode::Normal, '\'') => {
+                // entering '
+                if !started { started = true; first_qe = true; }
                 mode = Mode::InSingle;
             }
             (Mode::Normal, ch) if ch.is_whitespace() => {
-                push_word(&mut out, &mut cur, &mut scaped);
+                push_word(&mut out, &mut cur, &mut started, &mut first_qe);
             }
             (Mode::Normal, other) => {
-                if cur.is_empty() {
-                    scaped = Some(false);
-                }
+                if !started { started = true;}
                 cur.push(other);
             }
 
             // -------- Inside "double quotes" --------
             (Mode::InDouble, '\\') => {
-                if let Some(&next) = chars.peek() {
-                    // escape " \ and space inside "
-                    if next == '"' || next == '\\' || next == ' ' {
-                        if cur.is_empty() {
-                            scaped = Some(true);
-                        }
+                match chars.peek().copied() {
+                    Some(next) if matches!(next, '"' | '\\' | ' ') => {
+                        // escape limited set in "
                         cur.push(next);
                         chars.next();
-                    } else {
-                        if cur.is_empty() {
-                            scaped = Some(true);
-                        }
+                    }
+                    Some(_) | None => {
                         cur.push('\\');
                     }
-                } else {
-                    if cur.is_empty() {
-                        scaped = Some(true);
-                    }
-                    cur.push('\\');
                 }
             }
             (Mode::InDouble, '"') => {
                 mode = Mode::Normal;
             }
             (Mode::InDouble, other) => {
-                if cur.is_empty() {
-                    scaped = Some(true);
-                }
                 cur.push(other);
             }
 
@@ -132,16 +120,13 @@ fn parse_input(s: &str) -> Vec<String> {
                 mode = Mode::Normal;
             }
             (Mode::InSingle, other) => {
-                if cur.is_empty() {
-                    scaped = Some(true);
-                }
                 cur.push(other);
             }
         }
     }
 
     if !cur.is_empty() {
-        if !scaped.unwrap_or(false) && cur.starts_with('~') {
+        if !first_qe && cur.starts_with('~') {
             expand_tilde(&mut cur);
         }
         out.push(cur);
@@ -198,7 +183,7 @@ pub fn read_command() -> io::Result<Option<String>> {
         }
 
         if n == 0 && !filled {
-            println!("\nUnexpected EOF");
+            eprintln!("\nUnexpected EOF");
             return Ok(Some(String::new()));
         }
         
