@@ -102,18 +102,10 @@ fn parse_flags(args: &[String]) -> Result<Flags, String> {
         if !after_ddash && a.starts_with('-') && a != "-" {
             for ch in a.chars().skip(1) {
                 match ch {
-                    'a' => {
-                        flags.a = true;
-                    }
-                    'l' => {
-                        flags.l = true;
-                    }
-                    'F' => {
-                        flags.f = true;
-                    }
-                    _ => {
-                        return Err(format!("ls: invalid option -- '{}'", ch));
-                    }
+                    'a' => flags.a = true,
+                    'l' => flags.l = true,
+                    'F' => flags.f = true,
+                    _ => return Err(format!("ls: invalid option -- '{}'", ch)),
                 }
             }
         }
@@ -132,10 +124,16 @@ fn collect_operands(args: &[String]) -> Vec<String> {
         if !after_ddash && a.starts_with('-') && a != "-" {
             continue;
         }
-        if fs::symlink_metadata(a).is_err() {
-            eprintln!("ls: cannot access '{}': No such file or directory", a);
-        } else {
-            out.push(a.clone());
+        match fs::symlink_metadata(a) {
+            Ok(_) => out.push(a.clone()),
+            Err(e) => {
+                let msg = match e.kind() {
+                    io::ErrorKind::NotFound         => "No such file or directory",
+                    io::ErrorKind::PermissionDenied => "Permission denied",
+                    _ => "Not eligible"
+                };
+                eprintln!("ls: cannot access '{}': {}", a, msg);
+            }
         }
     }
     out
@@ -508,21 +506,12 @@ fn color_for(path: &Path, md: &fs::Metadata) -> (String, String) {
 
 fn render_name(name: &str, path: &Path, md: &fs::Metadata, classify: bool) -> String {
     let (pref, fallback_suffix) = color_for(path, md);
-
     let escaped = escape_newlines(name);
-    let add_quote = escaped.contains(' ');
-
     let mut out = String::with_capacity(escaped.len() + 10);
-
-    if add_quote {
-        out.push('\'');
-    }
+    
     out.push_str(&pref);
     out.push_str(&escaped);
     out.push_str(RESET);
-    if add_quote {
-        out.push('\'');
-    }
 
     if classify {
         if let Some(c) = class_suffix(md) {
