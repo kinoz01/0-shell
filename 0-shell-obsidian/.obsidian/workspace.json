@@ -15,7 +15,7 @@
               "type": "markdown",
               "state": {
                 "file": "print_long().md",
-                "mode": "preview",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
@@ -228,9 +228,13 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "8114a3c5cafe4270",
+  "active": "5e28fe5c4e4f0346",
   "lastOpenFiles": [
+    "List Files.md",
     "print_long().md",
+    "uid_gid().md",
+    "major_minor.md",
+    "is_dev().md",
     "column_widths.md",
     "Operands Collection.md",
     "ls.md",
@@ -249,13 +253,9 @@
     "Rust Modules.md",
     "peek().md",
     "ls -l.md",
-    "List Files.md",
     "print_long.md",
     "symlinks tp.md",
     "Hard links tp.md",
-    "Hard links vs Symlinks.md",
-    "Hard links.md",
-    "Device files.md",
     "intersetion.png",
     "Untitled.canvas",
     "Untitled 1.canvas",

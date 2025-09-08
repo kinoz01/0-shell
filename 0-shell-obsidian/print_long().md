@@ -113,3 +113,5 @@ fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
 | `unwrap_or_else(...)` | Fallback to full path string if no file name exists |
 
 This approach is robust, user-safe, and compatible with unusual file names.
+
+# 2) `print_long_named`
