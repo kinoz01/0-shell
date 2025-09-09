@@ -1,277 +1,475 @@
 ```rust
 fn parse_input(s: &str) -> Vec<String> {
-    #[derive(Copy, Clone, PartialEq)]
-    enum Mode {
-        Normal,
-        InSingle,
-        InDouble,
-    }
-
     let mut out = Vec::new();
     let mut cur = String::new();
     let mut chars = s.chars().peekable();
     let mut mode = Mode::Normal;
 
+    // started: have we begun the current word?
+    // first_qe: the very first char of the word was quoted or escaped
+    let mut started = false;
+    let mut first_qe = false;
+
+    let push_word = |out: &mut Vec<String>, cur: &mut String, started: &mut bool, first_qe: &mut bool| {
+        if !cur.is_empty() {
+            if !*first_qe && cur.starts_with('~') {
+                expand_tilde(cur);
+            }
+            out.push(std::mem::take(cur));
+        }
+        *started = false;
+        *first_qe = false;
+    };
+
     while let Some(c) = chars.next() {
         match (mode, c) {
             // -------- Normal mode --------
             (Mode::Normal, '\\') => {
-                if let Some(&next) = chars.peek() {
-                    // allow escaping space, quotes, and backslash
-                    if next == ' ' || next == '"' || next == '\\' || next == '\'' {
+                match chars.peek().copied() {
+                    Some(next) if matches!(next, ' ' | '"' | '\\' | '\'' | '~') => {
+                        if !started { started = true; first_qe = true; }
                         cur.push(next);
                         chars.next();
-                    } else {
+                    }
+                    Some(_) => {
+                        if !started { started = true; }
                         cur.push('\\');
                     }
-                } else {
-                    cur.push('\\');
+                    None => {
+                        if !started { started = true; }
+                        cur.push('\\');
+                    }
                 }
             }
             (Mode::Normal, '"') => {
+                // entering "
+                if !started { started = true; first_qe = true; }
                 mode = Mode::InDouble;
             }
             (Mode::Normal, '\'') => {
+                // entering '
+                if !started { started = true; first_qe = true; }
                 mode = Mode::InSingle;
             }
-            (Mode::Normal, c) if c.is_whitespace() => {
-                if !cur.is_empty() {
-                    out.push(std::mem::take(&mut cur));
-                }
+            (Mode::Normal, ch) if ch.is_whitespace() => {
+                push_word(&mut out, &mut cur, &mut started, &mut first_qe);
             }
-            (Mode::Normal, other) => cur.push(other),
+            (Mode::Normal, other) => {
+                if !started { started = true;}
+                cur.push(other);
+            }
 
             // -------- Inside "double quotes" --------
             (Mode::InDouble, '\\') => {
-                if let Some(&next) = chars.peek() {
-                    // escape " \ and space inside "
-                    if next == '"' || next == '\\' || next == ' ' {
+                match chars.peek().copied() {
+                    Some(next) if matches!(next, '"' | '\\' | ' ') => {
+                        // escape limited set in "
                         cur.push(next);
                         chars.next();
-                    } else {
+                    }
+                    Some(_) | None => {
                         cur.push('\\');
                     }
-                } else {
-                    cur.push('\\');
                 }
             }
             (Mode::InDouble, '"') => {
                 mode = Mode::Normal;
             }
-            (Mode::InDouble, other) => cur.push(other),
+            (Mode::InDouble, other) => {
+                cur.push(other);
+            }
 
             // -------- Inside 'single quotes' --------
             (Mode::InSingle, '\'') => {
                 mode = Mode::Normal;
             }
-            (Mode::InSingle, other) => cur.push(other),
+            (Mode::InSingle, other) => {
+                cur.push(other);
+            }
         }
     }
 
     if !cur.is_empty() {
+        if !first_qe && cur.starts_with('~') {
+            expand_tilde(&mut cur);
+        }
         out.push(cur);
     }
+
     out
+}
+
+fn expand_tilde(word: &mut String) {
+    if let Ok(home) = std::env::var("HOME") {
+        if word == "~" {
+            *word = home;
+        } else if let Some(rest) = word.strip_prefix("~/") {
+            *word = format!("{home}/{rest}");
+        }
+    }
 }
 ```
 
-## Overview
+## Purpose
 
-The `parse_input` function is a **custom tokenizer**. It splits a string into words, obeying these shell-like rules:
+The function `parse_input` mimics the shell's command-line parsing logic. It takes a user-typed command and splits it into tokens, accounting for:
 
-1.  Words are separated by **unquoted whitespace**.
+-   Whitespace token splitting
     
-2.  Text inside `'single quotes'` or `"double quotes"` is preserved as a **single token**.
+-   Quoting (`'` and `"`)
     
-3.  Certain characters (like quotes or space) can be **escaped with backslash (`\`)** to include them literally.
+-   Escaping (`\`)
+    
+-   Tilde expansion (`~ → $HOME`)
+    
+-   Proper treatment of the first character for tilde expansion rules
     
 
 ---
 
-## Internal Components
-
-### Mode Enum
+## Function Signature
 
 ```rust
-enum Mode { Normal, InSingle, InDouble }
+fn parse_input(s: &str) -> Vec<String>
 ```
 
-This enum helps track where the parser is:
-
--   `Normal`: Default state, splitting on spaces.
+-   **Input**: a single command line string
     
--   `InSingle`: Inside `'single quotes'`. Everything is taken literally.
-    
--   `InDouble`: Inside `"double quotes"`. Escapes are allowed for `"`, `\`, and space.
+-   **Output**: a vector of strings representing parsed arguments (tokens)
     
 
 ---
 
-## Token Parsing Logic
+## Step-by-Step Explanation
 
-The input string is processed character by character using a loop:
+### Initialization
 
 ```rust
-while let Some(c) = chars.next()
+let mut out = Vec::new();
+let mut cur = String::new();
+let mut chars = s.chars().peekable();
+let mut mode = Mode::Normal;
 ```
 
-The action taken depends on the **current mode**, the **current character** and sometimes the **upcoming character** (using [[peek()]] to retrieve it).
+-   `out`: The final list of parsed tokens.
+    
+-   `cur`: The current token being built.
+    
+-   `chars`: A [[peek()|peekable]] character iterator to look ahead.
+    
+-   `mode`: Quote parsing mode — starts in `Normal`.
+    
 
 ---
 
-### Mode::Normal
+### Quote Modes
 
-This is the default state when the parser is not inside any quotes.
+```rust
+enum Mode {
+    Normal,     // Default parsing (outside quotes)
+    InSingle,   // Inside single quotes: '...'
+    InDouble,   // Inside double quotes: "..."
+}
+```
 
-#### Rules:
+-   These guide how each character should be interpreted (quoted or literal).
+    
 
--   **Whitespace ( or `\t`)**:
+---
 
-    -   Ends the current token and pushes it to output.
-		`out.push(std::mem::take(&mut cur));`[[take push|🔗]]
-		
-    -   Multiple spaces are ignored unless escaped.
+### New State Flags
+
+```rust
+let mut started = false;
+let mut first_qe = false;
+```
+
+-   `started`: Have we begun a new token?
+    
+-   `first_qe`: Was the first character of the token **quoted or escaped**?
+    
+
+This distinction is essential because **tilde expansion only happens** if:
+
+-   The first character is **not quoted or escaped**
+    
+-   The word **starts with `~`**
+    
+
+---
+
+### Token Finalization Helper
+
+```rust
+let push_word = |out: &mut Vec<String>, cur: &mut String, started: &mut bool, first_qe: &mut bool| {
+    if !cur.is_empty() {
+        if !*first_qe && cur.starts_with('~') {
+            expand_tilde(cur);
+        }
+        out.push(std::mem::take(cur));
+    }
+    *started = false;
+    *first_qe = false;
+};
+```
+
+-   This function:
+    
+    -   Finalizes a token and [[take push|pushes]] it to the output vector.
         
--   **Quote characters**:
-    
-    -   `'` → enter `InSingle` mode
+    -   Applies `expand_tilde` only if the first character wasn't quoted/escaped.
         
-    -   `"` → enter `InDouble` mode
-        
--   **Backslash (`\`)**:
-    
-    -   Escapes **space, quotes, or backslash** (e.g. `\ ` → space, `\"` → `"`, `\\` → `\`)
-        
-    -   Other characters after `\` are treated literally as `\` + character.
-        
--   **Other characters**:
-    
-    -   Appended to the current token.
+    -   Resets the `cur` buffer and flags.
         
 
 ---
 
-### Mode::InSingle
-
-Inside `'single quotes'`. No escaping is done — everything is taken as-is.
-
-#### Rules:
-
--   Only `'` ends this mode.
-    
--   All other characters (including `\`) are added directly to the current token.
-    
-
----
-
-### Mode::InDouble
-
-Inside `"double quotes"`. Some escaping is allowed.
-
-#### Rules:
-
--   `\` can escape `"`, `\`, or space.
-    
--   `"` ends the quoted section.
-    
--   Other characters are taken as-is.
-    
-
----
-
-### End of Input
-
-After the loop, if there’s anything left in the `cur` buffer (the current token), it's pushed to the result vector.
-
----
-
-## Example 1: Simple Input
+## Main Parsing Loop
 
 ```rust
-parse_input("foo bar baz")
-// Output: ["foo", "bar", "baz"]
+while let Some(c) = chars.next() {
+    match (mode, c) {
+        ...
+    }
+}
 ```
 
--   Whitespace separates tokens.
-    
--   No quoting or escaping involved.
-    
+We now detail every pattern matched in the loop:
 
 ---
 
-## Example 2: Quoted Strings
+### 1\. `Mode::Normal` (outside quotes)
+
+#### a. Backslash Escape
 
 ```rust
-parse_input("foo 'bar baz' qux")
-// Output: ["foo", "bar baz", "qux"]
+(Mode::Normal, '\\') => {
+    match chars.peek().copied() {
+        Some(next) if matches!(next, ' ' | '"' | '\\' | '\'' | '~') => {
+            if !started { started = true; first_qe = true; }
+            cur.push(next);
+            chars.next();
+        }
+        Some(_) => {
+            if !started { started = true; }
+            cur.push('\\');
+        }
+        None => {
+            if !started { started = true; }
+            cur.push('\\');
+        }
+    }
+}
 ```
 
--   `'bar baz'` is treated as one token due to single quotes.
+-   Escapes common characters (, `"`, `'`, `\`, `~`) so they appear literally.
     
--   Quotes are not included in the result.
+-   Escaped characters are **quoted**, so tilde expansion will be disabled.
     
+-   Unrecognized escape sequences insert a literal backslash.
+    
+
+**Example**:
+
+```sh
+echo a\~b
+→ ["echo", "a~b"]  // '~' not expanded
+```
 
 ---
 
-## Example 3: Double Quotes with Escaping
+#### b. Entering Quotes
 
 ```rust
-parse_input("cmd \"arg \\\"with quote\\\"\" end")
-// Output: ["cmd", "arg \"with quote\"", "end"]
+(Mode::Normal, '"') => {
+    if !started { started = true; first_qe = true; }
+    mode = Mode::InDouble;
+}
+(Mode::Normal, '\'') => {
+    if !started { started = true; first_qe = true; }
+    mode = Mode::InSingle;
+}
 ```
 
-Step-by-step:
+-   Enters quote mode and marks the first character as quoted.
+    
+-   Important for avoiding tilde expansion.
+    
 
--   `cmd`: parsed normally.
-    
--   Inside `"..."`, the escaped quote `\\\"` becomes `"`.
-    
--   Final result includes a quoted token: `arg "with quote"`.
-    
+**Example**:
+
+```sh
+echo "~"
+→ ["echo", "~"]  // no expansion
+```
 
 ---
 
-## Example 4: Escaped Space
+#### c. Whitespace (Token Break)
 
 ```rust
-parse_input("one\\ two three")
-// Output: ["one two", "three"]
+(Mode::Normal, ch) if ch.is_whitespace() => {
+    push_word(&mut out, &mut cur, &mut started, &mut first_qe);
+}
 ```
 
--   `\\ ` turns into a space character.
-    
--   `one\ two` becomes `one two`.
+-   Ends the current word and pushes it to `out`.
     
 
 ---
 
-## Example 5: Escaping Backslash and Quotes
+#### d. Regular Characters
 
 ```rust
-parse_input("a\\ b 'c\\d' \"e\\\\f\"")
-// Output: ["a b", "c\\d", "e\\f"]
+(Mode::Normal, other) => {
+    if !started { started = true; }
+    cur.push(other);
+}
 ```
 
--   `a\\ b` → `a b` (escaped space)
+-   Appends characters to the current token.
     
--   `'c\\d'` → `c\\d` (no escaping in single quotes)
+
+**Example**:
+
+```sh
+cd ~/projects
+→ ["cd", "/home/user/projects"]
+```
+
+---
+
+### 2\. `Mode::InDouble` (inside double quotes)
+
+```rust
+(Mode::InDouble, '\\') => {
+    match chars.peek().copied() {
+        Some(next) if matches!(next, '"' | '\\' | ' ') => {
+            cur.push(next);
+            chars.next();
+        }
+        Some(_) | None => {
+            cur.push('\\');
+        }
+    }
+}
+(Mode::InDouble, '"') => {
+    mode = Mode::Normal;
+}
+(Mode::InDouble, other) => {
+    cur.push(other);
+}
+```
+
+-   Handles escaping within double quotes (`"\""` becomes `"`)
     
--   `"e\\\\f"` → `e\\f` (escaped backslash inside double quotes)
+-   All other characters are included as-is.
+    
+
+**Example**:
+
+```sh
+echo "my name is \"Bob\""
+→ ["echo", "my name is \"Bob\""]
+```
+
+---
+
+### 3\. `Mode::InSingle` (inside single quotes)
+
+```rust
+(Mode::InSingle, '\'') => {
+    mode = Mode::Normal;
+}
+(Mode::InSingle, other) => {
+    cur.push(other);
+}
+```
+
+-   Inside single quotes, **everything is literal**.
+    
+-   No escaping is performed.
+    
+
+**Example**:
+
+```sh
+echo 'O\'Reilly'
+→ ["echo", "O\\'Reilly"]
+```
+
+---
+
+## End of Input Handling
+
+```rust
+if !cur.is_empty() {
+    if !first_qe && cur.starts_with('~') {
+        expand_tilde(&mut cur);
+    }
+    out.push(cur);
+}
+```
+
+-   After the loop ends, it ensures the last token is finalized.
     
 
 ---
 
-## Summary Table
+## Tilde Expansion
 
-| Input | Tokenized Result | Notes |
+```rust
+fn expand_tilde(word: &mut String) {
+    if let Ok(home) = std::env::var("HOME") {
+        if word == "~" {
+            *word = home;
+        } else if let Some(rest) = word.strip_prefix("~/") {
+            *word = format!("{home}/{rest}");
+        }
+    }
+}
+```
+
+-   If the token starts with `~`, it is expanded to the user's home directory.
+    
+-   Only applies if:
+    
+    -   The token is not quoted or escaped.
+        
+    -   It appears as `~` or `~/...`.
+        
+
+**Example**:
+
+```sh
+cd ~
+→ ["cd", "/home/username"]
+
+cd '~/Documents'
+→ ["cd", "~/Documents"]  // no expansion
+```
+
+---
+
+## Final Output
+
+Returns `Vec<String>` containing the parsed command arguments.
+
+---
+
+# ✅ Full Example Table
+
+| Input | Result | Notes |
 | --- | --- | --- |
-| `"a b c"` | `["a", "b", "c"]` | Simple split |
-| `"a 'b c' d"` | `["a", "b c", "d"]` | Single quotes preserve space |
-| `"a \"b c\" d"` | `["a", "b c", "d"]` | Double quotes with space |
-| `"a\\ b"` | `["a b"]` | Escaped space |
-| `"a\\\"b"` | `["a\"b"]` | Escaped quote |
-| `"a 'b\\'c'"` | `["a", "b\\'c"]` | Escaping has no effect inside single quotes |
-| `"a \"b\\\"c\""` | `["a", "b\"c"]` | Escaping quote inside double quotes |
+| `a b c` | `["a", "b", "c"]` | Basic split |
+| `a 'b c'` | `["a", "b c"]` | Single-quoted string |
+| `a "b c"` | `["a", "b c"]` | Double-quoted string |
+| `a\ b` | `["a b"]` | Escaped space |
+| `a\\\"b` | `["a\"b"]` | Escaped quote |
+| `cd ~` | `["cd", "/home/user"]` | Tilde expansion |
+| `cd '~/work'` | `["cd", "~/work"]` | No expansion inside quotes |
+| `echo "hello\\ world"` | `["echo", "hello world"]` | Escaped space inside double quotes |
+| `echo 'hello\\ world'` | `["echo", "hello\\ world"]` | No escape handling inside single quotes |
 
 ---
 

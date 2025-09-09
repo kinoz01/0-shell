@@ -25,22 +25,8 @@ Deleting a hard link does not delete the file's data. It simply removes one of t
 *   **No visual distinction**: Unlike symbolic links, which are easily identifiable by an `l` at the beginning of their `ls -l` output, hard links look exactly like a regular file. The only way to tell if a file has multiple hard links is to check its link count or its inode number using the `ls -i` command.
     
 
-<br> <br>
-
+<br><br>
 A video that provides a good visual explanation of how links work in Linux can be a useful tool for learning. [#5 Soft Link and Hard Link in Linux | redhat | 2023 | s3cloudhub](https://www.youtube.com/watch?v=5aVh4z93uCs)
 
-[
 
-![](https://www.gstatic.com/images/branding/productlogos/youtube/v9/192px.svg)
-
-#5 Soft Link and Hard Link in Linux | redhat | 2023 | s3cloudhub - YouTube
-
-S3CloudHub · 667 vues
-
-
-
-](https://www.youtube.com/watch?v=5aVh4z93uCs)
-
-![](https://i.ytimg.com/vi/5aVh4z93uCs/maxresdefault.jpg)
-
-![](https://www.gstatic.com/images/branding/productlogos/youtube/v9/192px.svg)
+#unix-files

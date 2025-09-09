@@ -33,41 +33,30 @@ mod commands;
 use std::io::{self, Write};
 
 fn main() {
-    let mut line = String::new();
+    print!("\x1b[2J\x1b[H");
 
     loop {
-        // prompt
-        print!("{}", shell::prompt());
-        if let Err(e) = io::stdout().flush() {
-            eprintln!("flush error: {e}");
-            break;
-        }
-
-        line.clear();
-        let n = match io::stdin().read_line(&mut line) {
-            Ok(n) => n,
-            Err(e) => {
-                eprintln!("read error: {e}");
+        let cmdline = match shell::read_command() {
+            Ok(Some(s)) => s,   // got a line
+            Ok(None) => {       // EOF (Ctrl+D)
+                println!();
                 break;
             }
+            Err(e) => {         // read error -> print and keep shell alive
+                eprintln!("stdin read error: {}", e);
+                continue;
+            }
         };
-        if n == 0 {
-            println!(); // Ctrl+D
-            break;
-        }
 
-        let cmdline = line.trim_end();
-        if cmdline.is_empty() {
+        if cmdline.trim().is_empty() {
             continue;
         }
-
-        match shell::dispatch(cmdline) {
-            Ok(keep_running) if !keep_running => break,
-            Ok(_) => {}
-            Err(e) => eprintln!("{e}"),
+        if shell::dispatch(cmdline.trim_end()) {
+            break;
         }
     }
 }
+
 ```
 
 ### Difference vs. `-> io::Result<()>`

@@ -1,10 +1,8 @@
-use std::env;
 use std::fs::File;
 use std::io::Read;
 
 pub fn run(files: &[String]) {
     for file in files {
-        let mut path = file;
         match File::open(file) {
             Ok(mut f) => {
                 let mut buffer: String = String::new();

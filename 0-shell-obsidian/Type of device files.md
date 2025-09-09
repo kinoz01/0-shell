@@ -136,3 +136,5 @@ srw-rw---- 1 root docker 0 Aug 31 /var/run/docker.sock  # socket
 -   **Other devices**: pipes (`p`), sockets (`s`).
     
 -   Regular files (`-`), symlinks (`l`), directories (`d`) are not devices, but live alongside them.
+
+#unix-files

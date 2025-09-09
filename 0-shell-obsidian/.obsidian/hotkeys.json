@@ -7,5 +7,15 @@
       ],
       "key": "K"
     }
+  ],
+  "extended-graph:enable-in-graph-view": [
+    {
+      "modifiers": [
+        "Alt",
+        "Mod",
+        "Shift"
+      ],
+      "key": "M"
+    }
   ]
 }

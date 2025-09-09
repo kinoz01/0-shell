@@ -1,20 +1,6 @@
 use std::env;
 use std::path::Path;
 
-fn expand_tilde(arg: &str) -> Result<String, String> {
-    if arg == "~" {
-        env::var("HOME").map_err(|_| "cd: HOME not set".to_string())
-    } else if let Some(rest) = arg.strip_prefix("~/") {
-        let home = env::var("HOME").map_err(|_| "cd: HOME not set".to_string())?;
-        Ok(format!("{home}/{rest}"))
-    } else if arg.starts_with('~') {
-        // ~username not implemented
-        Err("cd: ~user form is not supported".to_string())
-    } else {
-        Ok(arg.to_string())
-    }
-}
-
 pub fn run(args: &[String]) {
     // Decide the target directory
     let target = match args.len() {
@@ -40,13 +26,7 @@ pub fn run(args: &[String]) {
                     }
                 }
             } else {
-                match expand_tilde(a) {
-                    Ok(s) => s,
-                    Err(m) => {
-                        eprintln!("{m}");
-                        return;
-                    }
-                }
+                a.to_string()
             }
         }
         _ => {
