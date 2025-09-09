@@ -52,7 +52,7 @@ pub fn run(args: &[String]) {
                 .collect();
             let widths = compute_widths(&items);
             for (p, md) in &files {
-                let _ = print_long(Path::new(p), md, f, &widths);
+                print_long(Path::new(p), md, f, &widths);
             }
         } else {
             for (p, md) in &files {
@@ -69,7 +69,7 @@ pub fn run(args: &[String]) {
     }
 
     // print directories
-    let need_headers = dirs.len() + (!files.is_empty() as usize) + 0 > 1;
+    let need_headers = dirs.len() + (!files.is_empty() as usize) > 1;
     for (i, d) in dirs.iter().enumerate() {
         if need_headers {
             println!("{}:", d);
@@ -102,18 +102,10 @@ fn parse_flags(args: &[String]) -> Result<Flags, String> {
         if !after_ddash && a.starts_with('-') && a != "-" {
             for ch in a.chars().skip(1) {
                 match ch {
-                    'a' => {
-                        flags.a = true;
-                    }
-                    'l' => {
-                        flags.l = true;
-                    }
-                    'F' => {
-                        flags.f = true;
-                    }
-                    _ => {
-                        return Err(format!("ls: invalid option -- '{}'", ch));
-                    }
+                    'a' => flags.a = true,
+                    'l' => flags.l = true,
+                    'F' => flags.f = true,
+                    _ => return Err(format!("ls: invalid option -- '{}'", ch)),
                 }
             }
         }
@@ -132,10 +124,16 @@ fn collect_operands(args: &[String]) -> Vec<String> {
         if !after_ddash && a.starts_with('-') && a != "-" {
             continue;
         }
-        if fs::symlink_metadata(a).is_err() {
-            eprintln!("ls: cannot access '{}': No such file or directory", a);
-        } else {
-            out.push(a.clone());
+        match fs::symlink_metadata(a) {
+            Ok(_) => out.push(a.clone()),
+            Err(e) => {
+                let msg = match e.kind() {
+                    io::ErrorKind::NotFound         => "No such file or directory",
+                    io::ErrorKind::PermissionDenied => "Permission denied",
+                    _ => "Not eligible"
+                };
+                eprintln!("ls: cannot access '{}': {}", a, msg);
+            }
         }
     }
     out
@@ -178,7 +176,7 @@ fn list_dir(dir: &Path, show_all: bool, long: bool, classify: bool) -> io::Resul
             .collect();
         let widths = compute_widths(&items);
         for (name, path, md) in entries {
-            let _ = print_long_named(&name, &path, &md, classify, &widths);
+            print_long_named(&name, &path, &md, classify, &widths);
         }
     } else {
         for (name, path, md) in entries {
@@ -197,7 +195,7 @@ fn total_blocks(dir: &Path, show_all: bool) -> io::Result<u64> {
 
     // Only count "." and ".." when -a is on (to match the listing)
     if show_all {
-        if let Ok(md) = fs::symlink_metadata(dir.join("."))  {
+        if let Ok(md) = fs::symlink_metadata(dir.join(".")) {
             total = total.saturating_add(md.blocks());
         }
         if let Ok(md) = fs::symlink_metadata(dir.join("..")) {
@@ -252,21 +250,15 @@ fn compute_widths(items: &[(&Path, &fs::Metadata)]) -> Widths {
     w
 }
 
-fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) -> io::Result<()> {
+fn print_long(path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
     let name = path
         .file_name()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_else(|| path.to_string_lossy().into_owned());
-    print_long_named(&name, path, md, classify, w)
+    print_long_named(&name, path, md, classify, w);
 }
 
-fn print_long_named(
-    name: &str,
-    path: &Path,
-    md: &fs::Metadata,
-    classify: bool,
-    w: &Widths
-) -> io::Result<()> {
+fn print_long_named(name: &str, path: &Path, md: &fs::Metadata, classify: bool, w: &Widths) {
     let perms = mode_string(path, md);
     let (user, group) = uid_gid(md.uid(), md.gid());
     let nlink = md.nlink();
@@ -310,6 +302,8 @@ fn print_long_named(
     if md.file_type().is_symlink() {
         if let Ok(target) = fs::read_link(path) {
             let tstr = target.to_string_lossy().into_owned();
+            let tstr = escape_newlines(&tstr);
+
             let tpath = if target.is_absolute() {
                 target
             } else {
@@ -324,11 +318,9 @@ fn print_long_named(
         }
     }
     println!();
-    Ok(())
 }
 
 /* ---------------- helpers: mode/attrs, ids, time, color ---------------- */
-
 fn is_dev(md: &fs::Metadata) -> bool {
     let ft = md.file_type();
     ft.is_block_device() || ft.is_char_device()
@@ -400,7 +392,6 @@ fn mode_string(path: &Path, md: &fs::Metadata) -> String {
 }
 
 fn has_xattrs(path: &Path) -> bool {
-    // libc::listxattr(path, NULL, 0) -> size; >0 means there are xattrs
     let c = match CString::new(path.as_os_str().as_bytes()) {
         Ok(v) => v,
         Err(_) => {
@@ -515,10 +506,13 @@ fn color_for(path: &Path, md: &fs::Metadata) -> (String, String) {
 
 fn render_name(name: &str, path: &Path, md: &fs::Metadata, classify: bool) -> String {
     let (pref, fallback_suffix) = color_for(path, md);
-    let mut out = String::with_capacity(name.len() + 8);
+    let escaped = escape_newlines(name);
+    let mut out = String::with_capacity(escaped.len() + 10);
+    
     out.push_str(&pref);
-    out.push_str(name);
+    out.push_str(&escaped);
     out.push_str(RESET);
+
     if classify {
         if let Some(c) = class_suffix(md) {
             out.push(c);
@@ -527,4 +521,8 @@ fn render_name(name: &str, path: &Path, md: &fs::Metadata, classify: bool) -> St
         }
     }
     out
+}
+
+fn escape_newlines(s: &str) -> String {
+    s.replace('\n', "\\n")
 }

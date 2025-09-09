@@ -536,3 +536,6 @@ fn render_name(name: &str, path: &Path, md: &fs::Metadata, classify: bool) -> St
 2. [[Operands Collection]] 
 3. [[Split files & directories]]
 4. [[List Files]]
+
+
+#commands 
