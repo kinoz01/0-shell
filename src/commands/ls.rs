@@ -69,7 +69,7 @@ pub fn run(args: &[String]) {
     }
 
     // print directories
-    let need_headers = dirs.len() + (!files.is_empty() as usize) + 0 > 1;
+    let need_headers = dirs.len() + (!files.is_empty() as usize) > 1;
     for (i, d) in dirs.iter().enumerate() {
         if need_headers {
             println!("{}:", d);
