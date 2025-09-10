@@ -25,10 +25,14 @@ pub fn run(args: &[String]) {
         eprintln!("{}", e);
         Flags::default()
     });
-    let mut paths = collect_operands(args);
+    let (mut paths, had_operands) = collect_operands(args);
 
     if paths.is_empty() {
-        paths.push(".".into());
+        if had_operands {
+            return;
+        } else {
+            paths.push(".".into());
+        }
     }
 
     // split into files/dirs using lstat (symlink_metadata)
@@ -113,30 +117,35 @@ fn parse_flags(args: &[String]) -> Result<Flags, String> {
     Ok(flags)
 }
 
-fn collect_operands(args: &[String]) -> Vec<String> {
+fn collect_operands(args: &[String]) -> (Vec<String>, bool) {
     let mut out = Vec::new();
     let mut after_ddash = false;
+    let mut had_operands = false;
     for a in args {
         if !after_ddash && a == "--" {
             after_ddash = true;
             continue;
         }
         if !after_ddash && a.starts_with('-') && a != "-" {
-            continue;
+            continue; // option
         }
+
+        had_operands = true;
+
         match fs::symlink_metadata(a) {
             Ok(_) => out.push(a.clone()),
             Err(e) => {
                 let msg = match e.kind() {
                     io::ErrorKind::NotFound         => "No such file or directory",
                     io::ErrorKind::PermissionDenied => "Permission denied",
-                    _ => "Not eligible"
+                    _                                => "Not eligible",
                 };
                 eprintln!("ls: cannot access '{}': {}", a, msg);
             }
         }
     }
-    out
+
+    (out, had_operands)
 }
 
 /* ---------------- directory listing ---------------- */
