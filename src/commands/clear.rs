@@ -1,3 +1,3 @@
 pub fn run() {
-    print!("\x1b[2J\x1b[H");
+    print!("\x1B[2J\x1B[3J\x1B[H")
 }
