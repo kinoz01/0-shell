@@ -1,8 +1,3 @@
-// Unix-only ls with -l, -a, -F plus:
-// total (st_blocks/2), "." and ".." with -a, case-insensitive sort ignoring leading '.'
-// long format with aligned columns, device major/minor, xattrs '+', colors (incl. broken links),
-// symlink targets shown. No globbing, columns, or locale sort.
-
 use std::ffi::{ CStr, CString };
 use std::fs;
 use std::io;
@@ -35,7 +30,7 @@ pub fn run(args: &[String]) {
         }
     }
 
-    // split into files/dirs using lstat (symlink_metadata)
+    // split into files/dirs (symlink_metadata)
     let mut files: Vec<(String, fs::Metadata)> = Vec::new();
     let mut dirs: Vec<String> = Vec::new();
 
@@ -138,7 +133,7 @@ fn collect_operands(args: &[String]) -> (Vec<String>, bool) {
                 let msg = match e.kind() {
                     io::ErrorKind::NotFound         => "No such file or directory",
                     io::ErrorKind::PermissionDenied => "Permission denied",
-                    _                                => "Not eligible",
+                    _                               => "Not eligible",
                 };
                 eprintln!("ls: cannot access '{}': {}", a, msg);
             }

@@ -74,7 +74,7 @@ for p in &paths {
 
 -   Loop through each operand path.
     
--   `fs::symlink_metadata(p)` is like Unix `lstat`:
+-   `fs::symlink_metadata(p)` [[symlink_metadata()| 🔗]] is like Unix `lstat`:
     
     -   Retrieves metadata about the path **without following symlinks**.
         

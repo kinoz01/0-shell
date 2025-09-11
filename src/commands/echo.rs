@@ -1,5 +1,5 @@
 use std::io::Write;
-pub fn run(args: Vec<String>) {
+pub fn run(args: &[String]) {
     if args.len() == 0 {
         return;
     }

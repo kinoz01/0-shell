@@ -113,12 +113,6 @@ This structure makes the shell modular: each command (like `mkdir`, `ls`, `cd`, 
 ---
 
 ### Special Cases
-
-```rust
-"echo" => echo::run(args.to_vec()),
-```
-
--   `args.to_vec()`: Clones the argument slice into a new `Vec<String>`. Likely required because the `echo::run` function needs ownership of the data rather than a borrowed slice.
     
 
 ```rust

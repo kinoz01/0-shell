@@ -26,7 +26,7 @@ pub fn dispatch(input: &str) -> bool {
         "cp"   => cp::run(args),
         "rm"   => rm::run(args),
         "mv"   => mv::run(args),
-        "echo" => echo::run(args.to_vec()),
+        "echo" => echo::run(args),
         "clear" => clear::run(),
         "exit" => return true,
         other => eprintln!("Command '{}' not found", other),

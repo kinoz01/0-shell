@@ -1,4 +1,5 @@
 - Hard links [[Hard links tp|🔗]]
 - Soft links [[symlinks tp|🔗]]
 - inodes [[inodes tp|🔗]]
--  device files [[device files tp|🔗]]
+- device files [[device files tp|🔗]]
+- pipe [[pipe tp|🔗]]
